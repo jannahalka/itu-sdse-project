@@ -1,0 +1,12 @@
+loguru
+mkdocs
+pip
+python-dotenv
+ruff
+tqdm
+typer
+scikit-learn
+pandas
+mlflow
+xgboost
+-e .
