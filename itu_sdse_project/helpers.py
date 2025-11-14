@@ -25,3 +25,10 @@ def impute_missing_values(x, method="mean"):
     else:
         x = x.fillna(x.mode()[0])
     return x
+
+
+def create_dummy_cols(df, col):
+    df_dummies = pd.get_dummies(df[col], prefix=col, drop_first=True)
+    new_df = pd.concat([df, df_dummies], axis=1)
+    new_df = new_df.drop(col, axis=1)
+    return new_df

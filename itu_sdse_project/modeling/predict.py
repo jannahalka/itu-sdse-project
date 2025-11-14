@@ -1,7 +1,8 @@
 from pathlib import Path
 
+import joblib
 from loguru import logger
-from tqdm import tqdm
+import pandas as pd
 import typer
 
 from itu_sdse_project.config import MODELS_DIR, PROCESSED_DATA_DIR
@@ -11,19 +12,18 @@ app = typer.Typer()
 
 @app.command()
 def main(
-    # ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
-    features_path: Path = PROCESSED_DATA_DIR / "test_features.csv",
+    features_path: Path = PROCESSED_DATA_DIR / "X_test.csv",
     model_path: Path = MODELS_DIR / "model.pkl",
-    predictions_path: Path = PROCESSED_DATA_DIR / "test_predictions.csv",
-    # -----------------------------------------
+    predictions_path: Path = PROCESSED_DATA_DIR / "y_test.csv",
 ):
-    # ---- REPLACE THIS WITH YOUR OWN CODE ----
     logger.info("Performing inference for model...")
-    for i in tqdm(range(10), total=10):
-        if i == 5:
-            logger.info("Something happened for iteration 5.")
+    with open(model_path, "rb") as f:
+        model = joblib.load(f)
+
+    X = pd.read_csv(features_path)
+    y = pd.read_csv(predictions_path)
+    print(model.predict(X.head(5)), y.head(5))
     logger.success("Inference complete.")
-    # -----------------------------------------
 
 
 if __name__ == "__main__":
