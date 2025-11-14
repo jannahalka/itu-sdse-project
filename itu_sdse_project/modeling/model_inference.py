@@ -1,6 +1,5 @@
-import sklearn
-import pandas as pd
 import joblib
+import pandas as pd
 
 with open("artifacts/lead_model_lr.pkl", "rb") as f:
     model = joblib.load(f)

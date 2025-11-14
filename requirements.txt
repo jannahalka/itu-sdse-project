@@ -9,4 +9,5 @@ scikit-learn
 pandas
 mlflow
 xgboost
+pytest
 -e .
