@@ -10,7 +10,7 @@ from tqdm import tqdm
 import typer
 
 from itu_sdse_project.config import PROCESSED_DATA_DIR, RAW_DATA_DIR
-from itu_sdse_project.helpers import describe_numeric_col, impute_missing_values
+from itu_sdse_project.helpers import impute_missing_values
 
 app = typer.Typer()
 
@@ -31,7 +31,6 @@ def create_training_data():
         max_date = pd.to_datetime(max_date).date()
 
     min_date = pd.to_datetime(min_date).date()
-
     # Time limit data
     data["date_part"] = pd.to_datetime(data["date_part"]).dt.date
     data = data[(data["date_part"] >= min_date) & (data["date_part"] <= max_date)]
@@ -65,12 +64,8 @@ def create_training_data():
         lambda x: x.clip(lower=(x.mean() - 2 * x.std()), upper=(x.mean() + 2 * x.std()))
     )
     cont_vars = cont_vars.apply(impute_missing_values)
-    cont_vars.apply(describe_numeric_col).T
     cat_vars.loc[cat_vars["customer_code"].isna(), "customer_code"] = "None"
     cat_vars = cat_vars.apply(impute_missing_values)
-    cat_vars.apply(
-        lambda x: pd.Series([x.count(), x.isnull().sum()], index=["Count", "Missing"])
-    ).T
 
     scaler = MinMaxScaler()
     scaler.fit(cont_vars)
@@ -80,12 +75,10 @@ def create_training_data():
     data = pd.concat([cat_vars, cont_vars], axis=1)
 
     data["bin_source"] = data["source"]
-    values_list = ["li", "organic", "signup", "fb"]
-    data.loc[~data["source"].isin(values_list), "bin_source"] = "Others"
     mapping = {"li": "socials", "fb": "socials", "organic": "group1", "signup": "group1"}
 
     data["bin_source"] = data["source"].map(mapping)
-    data.to_csv(PROCESSED_DATA_DIR / "training_datav2.csv", index=False)
+    data.to_csv(PROCESSED_DATA_DIR / "training_data.csv", index=False)
 
 
 @app.command()
