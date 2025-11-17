@@ -1,80 +1,97 @@
+import datetime
 from pathlib import Path
 
-import pandas as pd
-from sklearn.metrics import classification_report
-from sklearn.model_selection import RandomizedSearchCV, train_test_split
+import joblib
+import mlflow
+from sklearn.metrics import f1_score
+from sklearn.model_selection import RandomizedSearchCV
 import typer
 
-from itu_sdse_project.config import MODELS_DIR, PROCESSED_DATA_DIR, RANDOM_STATE
+from itu_sdse_project.config import DATA_VERSION, EXPERIMENT_NAME, MODELS_DIR, RANDOM_STATE
+from itu_sdse_project.helpers import MLFlowWrapper, load_data
 
 app = typer.Typer()
 
-model_results = {}
-
-X = pd.read_csv(PROCESSED_DATA_DIR / "features.csv")
-y = pd.read_csv(PROCESSED_DATA_DIR / "labels.csv")
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, random_state=42, test_size=0.15, stratify=y
-)
-
 
 @app.command()
-def xgboost(output_path: Path = MODELS_DIR / "xgboost.json"):
+def xgboost(output_path: Path = MODELS_DIR / "xgboost.pkl"):
     from scipy.stats import randint, uniform
     from xgboost import XGBRFClassifier
 
-    model = XGBRFClassifier(RANDOM_STATE)
+    X_train, X_test, y_train, y_test = load_data()
+
     params = {
         "learning_rate": uniform(1e-2, 3e-1),
         "min_split_loss": uniform(0, 10),
         "max_depth": randint(3, 10),
         "subsample": uniform(0, 1),
-        "objective": ["reg:squarederror", "binary:logistic", "reg:logistic"],
+        "objective": ["binary:logistic"],
         "eval_metric": ["aucpr", "error"],
     }
-    model_grid = RandomizedSearchCV(
-        model, param_distributions=params, n_jobs=-1, verbose=3, n_iter=10, cv=10
-    )
-    model_grid.fit(X_train, y_train)
 
-    y_pred_train = model_grid.predict(X_train)
+    mlflow.set_experiment(EXPERIMENT_NAME)
+    run_name = f"xgboost_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    model_results[output_path] = classification_report(y_train, y_pred_train, output_dict=True)
+    with mlflow.start_run(run_name=run_name):
+        model = XGBRFClassifier(random_state=RANDOM_STATE)
+        model_grid = RandomizedSearchCV(
+            model, param_distributions=params, n_jobs=-1, verbose=3, n_iter=10, cv=10
+        )
+        model_grid.fit(X_train, y_train)
+        best_model = model_grid.best_estimator_
 
-    xgboost_model = model_grid.best_estimator_
-    xgboost_model.save_model(output_path)
+        y_pred_test = model_grid.predict(X_test)
+
+        joblib.dump(value=best_model, filename=output_path)
+
+        mlflow.log_metric("f1_score", f1_score(y_test, y_pred_test))
+        mlflow.log_params(model_grid.best_params_)
+        mlflow.log_param("data_version", DATA_VERSION)
+
+        mlflow.pyfunc.log_model(
+            name="xgb_model_tuned",
+            python_model=MLFlowWrapper(best_model),
+            artifacts={"model": str(output_path)},
+        )
 
 
 @app.command()
 def log_reg(output_path: Path = MODELS_DIR / "logreg.pkl"):
-    import joblib
     from sklearn.linear_model import LogisticRegression
 
-    model = LogisticRegression()
+    X_train, X_test, y_train, y_test = load_data()
+
     params = {
         "solver": ["newton-cg", "lbfgs", "liblinear", "sag", "saga"],
         "penalty": ["none", "l1", "l2", "elasticnet"],
         "C": [100, 10, 1.0, 0.1, 0.01],
     }
-    model_grid = RandomizedSearchCV(model, param_distributions=params, verbose=3, n_iter=10, cv=3)
-    model_grid.fit(X_train, y_train)
-    best_model = model_grid.best_estimator_
 
-    joblib.dump(value=best_model, filename=output_path)
+    mlflow.set_experiment(EXPERIMENT_NAME)
+    run_name = f"log_reg_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    y_pred_test = model_grid.predict(X_test)
+    with mlflow.start_run(run_name=run_name):
+        model = LogisticRegression()
+        model_grid = RandomizedSearchCV(
+            model, param_distributions=params, verbose=3, n_iter=10, cv=3
+        )
+        model_grid.fit(X_train, y_train)
+        best_model = model_grid.best_estimator_
 
-    model_results[output_path] = classification_report(y_test, y_pred_test, output_dict=True)
+        y_pred_test = model_grid.predict(X_test)
 
+        joblib.dump(value=best_model, filename=output_path)
 
-@app.command()
-def main(
-    features_path: Path = PROCESSED_DATA_DIR / "features.csv",
-    labels_path: Path = PROCESSED_DATA_DIR / "labels.csv",
-    model_path: Path = MODELS_DIR / "model.pkl",
-):
-    pass
+        # log artifacts
+        mlflow.log_metric("f1_score", f1_score(y_test, y_pred_test))
+        mlflow.log_params(model_grid.best_params_)
+        mlflow.log_param("data_version", DATA_VERSION)
+
+        mlflow.pyfunc.log_model(
+            name="lr_model_tuned",
+            python_model=MLFlowWrapper(best_model),
+            artifacts={"model": str(output_path)},
+        )
 
 
 if __name__ == "__main__":
