@@ -47,7 +47,8 @@ def main():
 
         model_name = models[0].name
         model_uri = f"runs:/{run_id}/{model_name}"
-        mlflow.register_model(model_uri=model_uri, name=PROD_MODEL_NAME)
+        result = mlflow.register_model(model_uri=model_uri, name=PROD_MODEL_NAME)
+        return result.version
 
 
 if __name__ == "__main__":
