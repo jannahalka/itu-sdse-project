@@ -21,17 +21,54 @@ import (
 
 type MlPipeline struct{}
 
-// Returns a container that echoes whatever string argument is provided
-func (m *MlPipeline) ContainerEcho(stringArg string) *dagger.Container {
-	return dag.Container().From("alpine:latest").WithExec([]string{"echo", stringArg})
+func (m *MlPipeline) BuildEnv(
+	// +defaultPath="/"
+	src *dagger.Directory,
+) *dagger.Container {
+	pipCache := dag.CacheVolume("pip-cache")
+	opts := dagger.ContainerWithDirectoryOpts{
+		Exclude: []string{
+			".dagger/",
+			".git",
+			".gitignore",
+			".github",
+			".dvc",
+			"LICENSE",
+			"dagger.json",
+			"notebooks/",
+			"models/",
+			".ruff_cache/",
+			".pytest_cache/",
+			"data/processed/*",
+			"data/interim/*",
+		},
+	}
+	return dag.
+		Container().
+		From("python:3.12.2-bookworm").
+		WithDirectory("/app", src, opts).
+		WithWorkdir("/app").
+		WithMountedCache("/root/.cache/pip", pipCache).
+		WithExec([]string{"pip", "install", "-r", "requirements.txt"})
 }
 
-// Returns lines that match a pattern in the files of the provided Directory
-func (m *MlPipeline) GrepDir(ctx context.Context, directoryArg *dagger.Directory, pattern string) (string, error) {
-	return dag.Container().
-		From("alpine:latest").
-		WithMountedDirectory("/mnt", directoryArg).
-		WithWorkdir("/mnt").
-		WithExec([]string{"grep", "-R", pattern, "."}).
+func (m *MlPipeline) ProcessData(
+	ctx context.Context,
+	// +defaultPath="/"
+	src *dagger.Directory,
+) (string, error) {
+	return m.BuildEnv(src).
+		WithExec([]string{"python", "itu_sdse_project/dataset.py", "create-training-data"}).
+		WithExec([]string{"ls", "data/interim"}).
+		Stdout(ctx)
+}
+
+func (m *MlPipeline) Test(
+	ctx context.Context,
+	// +defaultPath="/"
+	src *dagger.Directory,
+) (string, error) {
+	return m.BuildEnv(src).
+		WithExec([]string{"pytest"}).
 		Stdout(ctx)
 }

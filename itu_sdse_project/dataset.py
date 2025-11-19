@@ -1,11 +1,9 @@
 from pathlib import Path
 import warnings
 
-from loguru import logger
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
-from tqdm import tqdm
 import typer
 
 from itu_sdse_project.config import INTERIM_DATA_DIR, PROCESSED_DATA_DIR, RAW_DATA_DIR
@@ -87,22 +85,6 @@ def split_training_data():
 
     y.to_csv(PROCESSED_DATA_DIR / "labels.csv", index=False)
     X.to_csv(PROCESSED_DATA_DIR / "features.csv", index=False)
-
-
-@app.command()
-def main(
-    # ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
-    input_path: Path = RAW_DATA_DIR / "dataset.csv",
-    output_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
-    # ----------------------------------------------
-):
-    # ---- REPLACE THIS WITH YOUR OWN CODE ----
-    logger.info("Processing dataset...")
-    for i in tqdm(range(10), total=10):
-        if i == 5:
-            logger.info("Something happened for iteration 5.")
-    logger.success("Processing dataset complete.")
-    # -----------------------------------------
 
 
 if __name__ == "__main__":
