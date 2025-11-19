@@ -1,4 +1,4 @@
-module dagger/hello-dagger
+module dagger/ml-pipeline
 
 go 1.24.6
 

@@ -1,5 +1,5 @@
 {
-  "name": "hello-dagger",
+  "name": "ml-pipeline",
   "engineVersion": "v0.18.16",
   "sdk": {
     "source": "go"
