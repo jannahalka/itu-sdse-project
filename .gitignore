@@ -2,6 +2,8 @@
 *.csv
 mlruns/
 models/
+dagger.gen.go
+.dagger/internal/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
