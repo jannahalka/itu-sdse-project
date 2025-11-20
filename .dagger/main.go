@@ -21,6 +21,54 @@ import (
 
 type MlPipeline struct{}
 
+func (m *MlPipeline) Download(
+	ctx context.Context,
+	// +defaultPath="/"
+	src *dagger.Directory,
+) *dagger.Directory {
+	// mlflow artifacts download -u "models:/reg_model/3" -d ./model
+	return m.Select(ctx, src).
+		WithExec([]string{"mlflow", "artifacts", "download", "-u", "models:/model@staging", "-d", "/tmp/model"}).
+		Directory("/tmp/model")
+}
+
+func (m *MlPipeline) Select(
+	ctx context.Context,
+	// +defaultPath="/"
+	src *dagger.Directory,
+) *dagger.Container {
+	return m.Train(src).
+		WithExec([]string{"python", "itu_sdse_project/modeling/selection.py"})
+}
+
+func (m *MlPipeline) Train(
+	// +defaultPath="/"
+	src *dagger.Directory,
+) *dagger.Container {
+	return m.PrepareData(src).
+		WithExec([]string{"python", "itu_sdse_project/modeling/train.py", "xgboost"}).
+		WithExec([]string{"python", "itu_sdse_project/modeling/train.py", "log-reg"})
+}
+
+func (m *MlPipeline) PrepareData(
+	// +defaultPath="/"
+	src *dagger.Directory,
+) *dagger.Container {
+	return m.BuildEnv(src).
+		WithExec([]string{"python", "itu_sdse_project/dataset.py", "create-training-data"}).
+		WithExec([]string{"python", "itu_sdse_project/dataset.py", "split-training-data"})
+}
+
+func (m *MlPipeline) Test(
+	ctx context.Context,
+	// +defaultPath="/"
+	src *dagger.Directory,
+) (string, error) {
+	return m.BuildEnv(src).
+		WithExec([]string{"pytest"}).
+		Stdout(ctx)
+}
+
 func (m *MlPipeline) BuildEnv(
 	// +defaultPath="/"
 	src *dagger.Directory,
@@ -36,11 +84,12 @@ func (m *MlPipeline) BuildEnv(
 			"LICENSE",
 			"dagger.json",
 			"notebooks/",
-			"models/",
+			"models/*",
 			".ruff_cache/",
 			".pytest_cache/",
 			"data/processed/*",
 			"data/interim/*",
+			"mlruns/",
 		},
 	}
 	return dag.
@@ -50,25 +99,4 @@ func (m *MlPipeline) BuildEnv(
 		WithWorkdir("/app").
 		WithMountedCache("/root/.cache/pip", pipCache).
 		WithExec([]string{"pip", "install", "-r", "requirements.txt"})
-}
-
-func (m *MlPipeline) ProcessData(
-	ctx context.Context,
-	// +defaultPath="/"
-	src *dagger.Directory,
-) (string, error) {
-	return m.BuildEnv(src).
-		WithExec([]string{"python", "itu_sdse_project/dataset.py", "create-training-data"}).
-		WithExec([]string{"ls", "data/interim"}).
-		Stdout(ctx)
-}
-
-func (m *MlPipeline) Test(
-	ctx context.Context,
-	// +defaultPath="/"
-	src *dagger.Directory,
-) (string, error) {
-	return m.BuildEnv(src).
-		WithExec([]string{"pytest"}).
-		Stdout(ctx)
 }

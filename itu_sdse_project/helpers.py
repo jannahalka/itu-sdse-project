@@ -4,14 +4,14 @@ from mlflow.pyfunc.model import PythonModel
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from itu_sdse_project.config import PROCESSED_DATA_DIR, PROD_MODEL_NAME
+from itu_sdse_project.config import MODEL_NAME, PROCESSED_DATA_DIR, RANDOM_STATE
 
 
 def load_data():
     X = pd.read_csv(PROCESSED_DATA_DIR / "features.csv")
     y = pd.read_csv(PROCESSED_DATA_DIR / "labels.csv")
 
-    return train_test_split(X, y, random_state=42, test_size=0.15, stratify=y)
+    return train_test_split(X, y, random_state=RANDOM_STATE, test_size=0.15, stratify=y)
 
 
 class MLFlowWrapper(PythonModel):
@@ -66,7 +66,7 @@ def get_prod_model():
     client = MlflowClient()
     prod_model = [
         model
-        for model in client.search_model_versions(f"name='{PROD_MODEL_NAME}'")
+        for model in client.search_model_versions(f"name='{MODEL_NAME}'")
         if dict(model)["current_stage"] == "Production"
     ]
     return prod_model

@@ -2,7 +2,7 @@ import mlflow
 from mlflow.entities import Run
 import typer
 
-from itu_sdse_project.config import EXPERIMENT_NAME, PROD_MODEL_NAME
+from itu_sdse_project.config import EXPERIMENT_NAME, MODEL_NAME
 from itu_sdse_project.helpers import get_prod_model
 
 app = typer.Typer()
@@ -11,6 +11,8 @@ app = typer.Typer()
 @app.command()
 def main():
     mlflow.set_experiment(EXPERIMENT_NAME)
+
+    client = mlflow.MlflowClient()
 
     run_id = None
     exp_ids: list[str] = [mlflow.get_experiment_by_name(EXPERIMENT_NAME).experiment_id]
@@ -47,8 +49,9 @@ def main():
 
         model_name = models[0].name
         model_uri = f"runs:/{run_id}/{model_name}"
-        result = mlflow.register_model(model_uri=model_uri, name=PROD_MODEL_NAME)
-        return result.version
+        result = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
+        client.set_registered_model_alias(MODEL_NAME, "staging", result.version)
+
 
 
 if __name__ == "__main__":

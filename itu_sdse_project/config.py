@@ -9,7 +9,7 @@ load_dotenv()
 RANDOM_STATE = 42
 DATA_VERSION = "0000"
 EXPERIMENT_NAME = "my_project"
-PROD_MODEL_NAME = "reg_model"
+MODEL_NAME = "model"
 
 # Paths
 PROJ_ROOT = Path(__file__).resolve().parents[1]
