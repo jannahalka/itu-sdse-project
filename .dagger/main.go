@@ -89,6 +89,7 @@ func (m *MlPipeline) BuildEnv(
 			".pytest_cache/",
 			"data/processed/*",
 			"data/interim/*",
+			"data/raw/*",
 			"mlruns/",
 		},
 	}
@@ -98,5 +99,7 @@ func (m *MlPipeline) BuildEnv(
 		WithDirectory("/app", src, opts).
 		WithWorkdir("/app").
 		WithMountedCache("/root/.cache/pip", pipCache).
-		WithExec([]string{"pip", "install", "-r", "requirements.txt"})
+		WithExec([]string{"pip", "install", "-r", "requirements.txt"}).
+		WithExec([]string{"pip", "install", "dvc"}).
+		WithExec([]string{"dvc", "get", "https://github.com/Jeppe-T-K/itu-sdse-project-data", "raw_data.csv", "-o", "data/raw"})
 }
