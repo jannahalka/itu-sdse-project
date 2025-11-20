@@ -22,7 +22,7 @@ jobs:
       - name: Upload Model Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: trained-model
+          name: model
           path: ./model/artifacts/*.pkl
 
       - name: Run Model Inference Test Action
