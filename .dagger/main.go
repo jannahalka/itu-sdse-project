@@ -25,11 +25,11 @@ func (m *MlPipeline) Download(
 	ctx context.Context,
 	// +defaultPath="/"
 	src *dagger.Directory,
-) *dagger.Directory {
-	// mlflow artifacts download -u "models:/reg_model/3" -d ./model
-	return m.Select(ctx, src).
+) *dagger.File {
+	container := m.Select(ctx, src).
 		WithExec([]string{"mlflow", "artifacts", "download", "-u", "models:/model@staging", "-d", "/tmp/model"}).
-		Directory("/tmp/model")
+		WithExec([]string{"bash", "-c", "cp /tmp/model/artifacts/*.pkl /tmp/model.pkl"})
+	return container.File("/tmp/model.pkl")
 }
 
 func (m *MlPipeline) Select(
