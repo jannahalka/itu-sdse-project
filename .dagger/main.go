@@ -28,6 +28,7 @@ func (m *MlPipeline) Download(
 ) *dagger.File {
 	container := m.Select(ctx, src).
 		WithExec([]string{"mlflow", "artifacts", "download", "-u", "models:/model@staging", "-d", "/tmp/model"}).
+		// Finds downloaded artifact
 		WithExec([]string{"bash", "-c", "cp /tmp/model/artifacts/*.pkl /tmp/model.pkl"})
 	return container.File("/tmp/model.pkl")
 }

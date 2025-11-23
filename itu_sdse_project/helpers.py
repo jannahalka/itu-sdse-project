@@ -4,7 +4,7 @@ from mlflow.pyfunc.model import PythonModel
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from itu_sdse_project.config import MODEL_NAME, PROCESSED_DATA_DIR, RANDOM_STATE
+from itu_sdse_project.config import PROCESSED_DATA_DIR, RANDOM_STATE
 
 
 def load_data():
@@ -60,13 +60,3 @@ def create_dummy_cols(df, col):
     return new_df
 
 
-def get_prod_model():
-    from mlflow.tracking import MlflowClient
-
-    client = MlflowClient()
-    prod_model = [
-        model
-        for model in client.search_model_versions(f"name='{MODEL_NAME}'")
-        if dict(model)["current_stage"] == "Production"
-    ]
-    return prod_model
