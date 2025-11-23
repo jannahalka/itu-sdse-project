@@ -58,5 +58,3 @@ def create_dummy_cols(df, col):
     new_df = pd.concat([df, df_dummies], axis=1)
     new_df = new_df.drop(col, axis=1)
     return new_df
-
-

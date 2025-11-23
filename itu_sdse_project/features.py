@@ -6,6 +6,7 @@ from itu_sdse_project.helpers import create_dummy_cols
 
 app = typer.Typer()
 
+
 @app.command()
 def main():
     data = pd.read_csv(INTERIM_DATA_DIR / "cleaned_data.csv")
