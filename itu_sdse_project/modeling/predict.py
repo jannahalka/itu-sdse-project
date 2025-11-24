@@ -17,13 +17,16 @@ def main(
     model_path: Path = MODELS_DIR / "model.pkl",
     predictions_path: Path = PROCESSED_DATA_DIR / "y_test.csv",
 ):
-    logger.info("Performing inference for model...")
+    logger.info("Starting inference.")
     with open(model_path, "rb") as f:
         model = joblib.load(f)
 
     X = pd.read_csv(features_path)
     y = pd.read_csv(predictions_path)
-    print(model.predict(X.head(5)), y.head(5))
+
+    predictions = model.predict(X.head(5))
+    logger.debug("Sample predictions: {}", predictions)
+    logger.debug("Sample true labels: {}", y.head(5).values.tolist())
     logger.success("Inference complete.")
 
 

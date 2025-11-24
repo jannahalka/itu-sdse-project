@@ -1,5 +1,6 @@
 from typing import Any
 
+from loguru import logger
 from mlflow.pyfunc.model import PythonModel
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -8,10 +9,38 @@ from itu_sdse_project.config import PROCESSED_DATA_DIR, RANDOM_STATE
 
 
 def load_data():
-    X = pd.read_csv(PROCESSED_DATA_DIR / "features.csv")
-    y = pd.read_csv(PROCESSED_DATA_DIR / "labels.csv")
+    features_path = PROCESSED_DATA_DIR / "features.csv"
+    labels_path = PROCESSED_DATA_DIR / "labels.csv"
 
-    return train_test_split(X, y, random_state=RANDOM_STATE, test_size=0.15, stratify=y)
+    logger.info("Loading processed features from {}", features_path)
+    logger.info("Loading processed labels from {}", labels_path)
+
+    X = pd.read_csv(features_path)
+    y = pd.read_csv(labels_path)
+
+    logger.info(
+        "Loaded processed data. X shape: {}, y shape: {}. Performing train/test split.",
+        X.shape,
+        y.shape,
+    )
+
+    x_train, x_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        random_state=RANDOM_STATE,
+        test_size=0.15,
+        stratify=y,
+    )
+
+    logger.info(
+        "Completed split. X_train: {}, X_test: {}, y_train: {}, y_test: {}",
+        x_train.shape,
+        x_test.shape,
+        y_train.shape,
+        y_test.shape,
+    )
+
+    return x_train, x_test, y_train, y_test
 
 
 class MLFlowWrapper(PythonModel):
@@ -54,6 +83,7 @@ def impute_missing_values(x, method="mean"):
 
 
 def create_dummy_cols(df, col):
+    logger.debug("Creating dummy variables for column '{}' (original shape: {})", col, df.shape)
     df_dummies = pd.get_dummies(df[col], prefix=col, drop_first=True)
     new_df = pd.concat([df, df_dummies], axis=1)
     new_df = new_df.drop(col, axis=1)
