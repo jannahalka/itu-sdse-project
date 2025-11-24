@@ -20,6 +20,7 @@ def xgboost(output_path: Path = MODELS_DIR / "xgboost.pkl"):
 
     X_train, X_test, y_train, y_test = load_data()
 
+    # TODO: The parameters are defined incorrectly
     params = {
         "learning_rate": uniform(1e-2, 3e-1),
         "min_split_loss": uniform(0, 10),
@@ -82,7 +83,6 @@ def log_reg(output_path: Path = MODELS_DIR / "logreg.pkl"):
 
         joblib.dump(value=best_model, filename=output_path)
 
-        # log artifacts
         mlflow.log_metric("f1_score", f1_score(y_test, y_pred_test))
         mlflow.log_params(model_grid.best_params_)
         mlflow.log_param("data_version", DATA_VERSION)

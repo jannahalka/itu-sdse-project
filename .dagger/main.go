@@ -28,6 +28,7 @@ func (m *MlPipeline) Download(
 ) *dagger.File {
 	container := m.Select(ctx, src).
 		WithExec([]string{"mlflow", "artifacts", "download", "-u", "models:/model@staging", "-d", "/tmp/model"}).
+		// Finds downloaded artifact
 		WithExec([]string{"bash", "-c", "cp /tmp/model/artifacts/*.pkl /tmp/model.pkl"})
 	return container.File("/tmp/model.pkl")
 }
@@ -55,8 +56,8 @@ func (m *MlPipeline) PrepareData(
 	src *dagger.Directory,
 ) *dagger.Container {
 	return m.BuildEnv(src).
-		WithExec([]string{"python", "itu_sdse_project/dataset.py", "create-training-data"}).
-		WithExec([]string{"python", "itu_sdse_project/dataset.py", "split-training-data"})
+		WithExec([]string{"python", "data/interim/make_dataset.py"}).
+		WithExec([]string{"python", "itu_sdse_project/features.py"})
 }
 
 func (m *MlPipeline) Test(
@@ -87,9 +88,7 @@ func (m *MlPipeline) BuildEnv(
 			"models/*",
 			".ruff_cache/",
 			".pytest_cache/",
-			"data/processed/*",
-			"data/interim/*",
-			"data/raw/*",
+			"data/**/*.csv",
 			"mlruns/",
 		},
 	}

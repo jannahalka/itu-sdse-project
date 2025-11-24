@@ -3,7 +3,6 @@ from mlflow.entities import Run
 import typer
 
 from itu_sdse_project.config import EXPERIMENT_NAME, MODEL_NAME
-from itu_sdse_project.helpers import get_prod_model
 
 app = typer.Typer()
 
@@ -26,19 +25,7 @@ def main():
 
     assert isinstance(best_run_exp, Run), "Type of `best_run_exp` should be `Run`"
 
-    prod_model = get_prod_model()
-
-    if len(prod_model) == 0:
-        run_id = best_run_exp.info.run_id
-    else:
-        prod_model_run_id = dict(prod_model[0])["run_id"]
-        prod_run = mlflow.get_run(prod_model_run_id)
-        prod_model_score = prod_run.data.metrics["f1_score"]
-        train_model_score = best_run_exp.data.metrics["f1_score"]
-
-        if train_model_score > prod_model_score:
-            print("Registering new model")
-            run_id = best_run_exp.info.run_id
+    run_id = best_run_exp.info.run_id
 
     if run_id:
         models = mlflow.search_logged_models(
@@ -51,7 +38,9 @@ def main():
         model_uri = f"runs:/{run_id}/{model_name}"
         result = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
         client.set_registered_model_alias(MODEL_NAME, "staging", result.version)
-
+    else:
+        # TODO: Log err
+        return
 
 
 if __name__ == "__main__":

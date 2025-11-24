@@ -5,6 +5,11 @@ models/
 dagger.gen.go
 .dagger/internal/
 
+# dvc specific
+.dvc/tmp/
+.dvc/cache/
+.dvc/config.local
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
