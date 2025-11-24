@@ -4,7 +4,7 @@
 
 PROJECT_NAME = itu-sdse-project
 PYTHON_VERSION = 3.12
-PYTHON_INTERPRETER = python3
+PYTHON_INTERPRETER = python3.12
 
 #################################################################################
 # COMMANDS                                                                      #
