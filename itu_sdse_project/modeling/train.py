@@ -6,6 +6,7 @@ import mlflow
 from sklearn.metrics import f1_score
 from sklearn.model_selection import RandomizedSearchCV
 import typer
+from loguru import logger
 
 from itu_sdse_project.config import DATA_VERSION, EXPERIMENT_NAME, MODELS_DIR, RANDOM_STATE
 from itu_sdse_project.helpers import MLFlowWrapper, load_data
@@ -18,6 +19,8 @@ def xgboost(output_path: Path = MODELS_DIR / "xgboost.pkl"):
     from scipy.stats import randint, uniform
     from xgboost import XGBRFClassifier
 
+    logger.info("Starting XGBoost training. Output path: {}", output_path)
+
     X_train, X_test, y_train, y_test = load_data()
 
     # TODO: The parameters are defined incorrectly
@@ -29,12 +32,15 @@ def xgboost(output_path: Path = MODELS_DIR / "xgboost.pkl"):
         "objective": ["binary:logistic"],
         "eval_metric": ["aucpr", "error"],
     }
+    logger.debug("Hyperparameter search space: {}", params)
 
     mlflow.set_experiment(EXPERIMENT_NAME)
     run_name = f"xgboost_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     with mlflow.start_run(run_name=run_name):
         model = XGBRFClassifier(random_state=RANDOM_STATE)
+
+        logger.info("Starting RandomizedSearchCV for XGBoost...")
         model_grid = RandomizedSearchCV(
             model, param_distributions=params, n_jobs=-1, verbose=3, n_iter=10, cv=10
         )
@@ -42,6 +48,8 @@ def xgboost(output_path: Path = MODELS_DIR / "xgboost.pkl"):
         best_model = model_grid.best_estimator_
 
         y_pred_test = model_grid.predict(X_test)
+        score = f1_score(y_test, y_pred_test)
+        logger.info("XGBoost Test F1-score: {:.4f}", score)
 
         joblib.dump(value=best_model, filename=output_path)
 
@@ -55,10 +63,14 @@ def xgboost(output_path: Path = MODELS_DIR / "xgboost.pkl"):
             artifacts={"model": str(output_path)},
         )
 
+        logger.success("XGBoost training pipeline complete.")
+
 
 @app.command()
 def log_reg(output_path: Path = MODELS_DIR / "logreg.pkl"):
     from sklearn.linear_model import LogisticRegression
+
+    logger.info("Starting Logistic Regression training. Output path: {}", output_path)
 
     X_train, X_test, y_train, y_test = load_data()
 
@@ -67,6 +79,7 @@ def log_reg(output_path: Path = MODELS_DIR / "logreg.pkl"):
         "penalty": ["none", "l1", "l2", "elasticnet"],
         "C": [100, 10, 1.0, 0.1, 0.01],
     }
+    logger.debug("Hyperparameter search space: {}", params)
 
     mlflow.set_experiment(EXPERIMENT_NAME)
     run_name = f"log_reg_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -78,8 +91,11 @@ def log_reg(output_path: Path = MODELS_DIR / "logreg.pkl"):
         )
         model_grid.fit(X_train, y_train)
         best_model = model_grid.best_estimator_
+        logger.success("Best Logistic Regression model selected: {}", model_grid.best_params_)
 
         y_pred_test = model_grid.predict(X_test)
+        score = f1_score(y_test, y_pred_test)
+        logger.info("LogReg Test F1-score: {:.4f}", score)
 
         joblib.dump(value=best_model, filename=output_path)
 
@@ -92,6 +108,8 @@ def log_reg(output_path: Path = MODELS_DIR / "logreg.pkl"):
             python_model=MLFlowWrapper(best_model),
             artifacts={"model": str(output_path)},
         )
+
+        logger.success("Logistic Regression training pipeline complete.")
 
 
 if __name__ == "__main__":
