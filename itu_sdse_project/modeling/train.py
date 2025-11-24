@@ -53,6 +53,7 @@ def xgboost(output_path: Path = MODELS_DIR / "xgboost.pkl"):
             name="xgb_model_tuned",
             python_model=MLFlowWrapper(best_model),
             artifacts={"model": str(output_path)},
+            input_example= X_train.head(5)
         )
 
 
@@ -63,8 +64,8 @@ def log_reg(output_path: Path = MODELS_DIR / "logreg.pkl"):
     X_train, X_test, y_train, y_test = load_data()
 
     params = {
-        "solver": ["newton-cg", "lbfgs", "liblinear", "sag", "saga"],
-        "penalty": ["none", "l1", "l2", "elasticnet"],
+        "solver": ["lbfgs", "saga"],
+        "penalty": ["l2"],
         "C": [100, 10, 1.0, 0.1, 0.01],
     }
 
@@ -91,6 +92,7 @@ def log_reg(output_path: Path = MODELS_DIR / "logreg.pkl"):
             name="lr_model_tuned",
             python_model=MLFlowWrapper(best_model),
             artifacts={"model": str(output_path)},
+            input_example=X_train.head(5)
         )
 
 

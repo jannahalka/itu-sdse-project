@@ -10,4 +10,5 @@ pandas
 mlflow
 xgboost
 pytest
+joblib
 -e .
