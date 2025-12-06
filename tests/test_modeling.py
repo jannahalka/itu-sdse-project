@@ -79,7 +79,7 @@ def test_model_selection_and_registration():
     try:
         latest_version = client.get_model_version_by_alias(MODEL_NAME, "staging")
 
-        assert "Staging" in latest_version.aliases, (
+        assert "staging" in latest_version.aliases, (
             "The retrieved model version does not have the expected 'Staging' alias."
         )
 
