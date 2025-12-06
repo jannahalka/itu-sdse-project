@@ -88,7 +88,7 @@ func (m *MlPipeline) BuildEnv(
 			"models/*",
 			".ruff_cache/",
 			".pytest_cache/",
-			"raw_data.csv",
+			"data/raw/raw_data.csv",
 			"mlruns/",
 		},
 	}
