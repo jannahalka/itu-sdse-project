@@ -65,9 +65,7 @@ func (m *MlPipeline) Test(
 	// +defaultPath="/"
 	src *dagger.Directory,
 ) (string, error) {
-	return m.BuildEnv(src).
-		WithExec([]string{"pytest"}).
-		Stdout(ctx)
+	return m.PrepareData(src).WithExec([]string{"pytest"}).Stdout(ctx)
 }
 
 func (m *MlPipeline) BuildEnv(
