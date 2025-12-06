@@ -52,7 +52,7 @@ class MLFlowWrapper(PythonModel):
 
         self.model = joblib.load(context.artifacts["model"])
 
-    def predict(self, context, model_input, params: dict[str, Any] | None = None):
+    def predict(self, context, model_input: pd.DataFrame, params: dict[str, Any] | None = None)-> pd.DataFrame:
         return self.model.predict_proba(model_input)[:, 1]
 
 

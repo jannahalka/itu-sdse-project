@@ -91,7 +91,7 @@ To conclude, we consolidated our work into a GitHub Action. Its sole purpose was
 Trains a classification model using the dataset found in `data/processed/`.
 
 ```bash
-python itu_sdse_project/modeling/train.py <log-reg|xgboost> [options]
+python itu_sdse_project/modeling/train.py <log-reg|xgboost> 
 ```
 
 | Argument | Required | Description                         |
@@ -99,11 +99,11 @@ python itu_sdse_project/modeling/train.py <log-reg|xgboost> [options]
 | log-reg  | true     | Trains a Logistic Regression model. |
 | xgboost  | true     | Trains an XGBoost Classifier.       |
 
-### `select.py`
+### `selection.py`
 Selects the best performing model from training runs and registers it as staging in MLFlow.
 
 ```bash
-python itu_sdse_project/modeling/select.py
+python itu_sdse_project/modeling/selection.py
 ```
 
 ### `features.py`
