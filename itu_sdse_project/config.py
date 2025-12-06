@@ -1,7 +1,10 @@
 from pathlib import Path
+import mlflow
 
 from dotenv import load_dotenv
 from loguru import logger
+
+mlflow.set_tracking_uri("sqlite:///mlflow.db")
 
 # Load environment variables from .env file if it exists
 load_dotenv()

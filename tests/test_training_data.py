@@ -1,8 +1,6 @@
 import pandas as pd
 
 from itu_sdse_project.config import INTERIM_DATA_DIR, PROCESSED_DATA_DIR
-
-
 def test_training_data_integrity():
     true_df = pd.read_csv("tests/data/training_data.csv")
     generated_df = pd.read_csv(INTERIM_DATA_DIR / "cleaned_data.csv")
